@@ -1,4 +1,4 @@
-#ADV-MENU 1.0
+#ADV-MENU 1.1
 #(C) 2008 Robin Wellner
 #
 #This program is free software: you can redistribute it and/or modify
@@ -36,6 +36,11 @@ class sli(object):
         self.min = tup[1]
         self.max = tup[2]
 
+class chk(object):
+    __slots__ = ('checked')
+    def __init__ (self, checked):
+        self.checked = checked
+
 def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, boxwidth, Font):
     Clock = ABClock()
     focus = 0
@@ -43,6 +48,8 @@ def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, bo
     for item in Items:
         if item[2] == 'slider':
             sliderdata[item[1]] = sli(item[3])
+        elif item[2] == 'checkbox':
+            sliderdata[item[1]] = chk(item[3])
     while True:
         Clock.tick(10)
         keystate = pygame.key.get_pressed()
@@ -61,6 +68,10 @@ def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, bo
                             if Xoffset2 < event.pos[0]:
                                 p = sliderdata[Items[clicked_item][1]]
                                 p.index = int(round(float(event.pos[0] - Xoffset2)/(boxwidth-Xoffset2+Xoffset)*p.max + p.min))
+                        elif Items[clicked_item][2] == 'checkbox':
+                            if Xoffset + boxwidth - itemheight < event.pos[0]:
+                                p = sliderdata[Items[clicked_item][1]]
+                                p.checked = not p.checked
             elif event.type == MOUSEMOTION:
                 if Xoffset < event.pos[0] < Xoffset+boxwidth and Yoffset < event.pos[1] < totalheight*len(Items):
                     focus = (event.pos[1] - Yoffset)/totalheight
@@ -84,6 +95,9 @@ def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, bo
                 elif event.key in (K_RETURN, K_SPACE):
                     if Items[focus][2] == 'button':
                         return Items[focus][1], sliderdata
+                    elif Items[focus][2] == 'checkbox':
+                        p = sliderdata[Items[focus][1]]
+                        p.checked = not p.checked
                 else:
                     pass
         Surface.fill((0,0,0))
@@ -106,6 +120,13 @@ def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, bo
                         pygame.draw.rect(Surface, (200, 200, 200), (Xoffset2, Yoffset + n*totalheight, float(p.index-p.min)/(p.max-p.min)*(boxwidth-Xoffset2+Xoffset), itemheight))
                     Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
                                  (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                elif draw_type == 'checkbox':
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth-itemheight, Yoffset + n*totalheight, itemheight, itemheight))
+                    p = sliderdata[Items[n][1]]
+                    if not p.checked:
+                        pygame.draw.rect(Surface, (0, 0, 0), (Xoffset+boxwidth-itemheight+8, Yoffset + n*totalheight+8, itemheight-16, itemheight-16))
+                    Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
+                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
             else:
                 if draw_type == 'button':
                     pygame.draw.rect(Surface, (255, 255, 255), (Xoffset, Yoffset + n*totalheight, boxwidth, itemheight), 1)
@@ -122,6 +143,13 @@ def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, bo
                         pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight, float(p.index-p.min)/(p.max-p.min)*(boxwidth-Xoffset2+Xoffset), itemheight))
                     Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
                                  (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                elif draw_type == 'checkbox':
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth-itemheight, Yoffset + n*totalheight, itemheight, itemheight), 1)
+                    p = sliderdata[Items[n][1]]
+                    if p.checked:
+                        pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth-itemheight+8, Yoffset + n*totalheight+8, itemheight-16, itemheight-16))
+                    Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
+                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
         pygame.display.flip()
 
 
@@ -133,6 +161,7 @@ if __name__ == '__main__':
     Font = pygame.font.Font("mksanstallx.ttf",14)
     Items = [('Abc', 'abc', 'button'),
              ('Do something', 'x', 'slider', (2, 0, 10)),
+             ('Done', 'p', 'checkbox', True),
              ('Test', 'name', 'disabled'),
              ('Quit', 'exit', 'button'),
             ]
@@ -145,4 +174,6 @@ if __name__ == '__main__':
         print "User chose Test"
     print "Slider index:",
     print result[1]['x'].index
+    print "Checkbox checked:",
+    print result[1]['p'].checked
     pygame.quit()
