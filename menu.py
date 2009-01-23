@@ -1,4 +1,4 @@
-#ADV-MENU 0.0
+#ADV-MENU 1.0
 #(C) 2008 Robin Wellner
 #
 #This program is free software: you can redistribute it and/or modify
