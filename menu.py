@@ -9,10 +9,6 @@
 
 import pygame
 from pygame.locals import *
-import os
-from sys import platform as sys_platform
-if sys_platform[:3] == 'win':
-    os.environ['SDL_VIDEO_CENTERED'] = '1'
 from math import *
 
 from time import sleep, time
@@ -33,32 +29,61 @@ class ABClock:
         except IOError:
             pass
 
-def menu(Surface, Items, Xoffset, Yoffset, itemheight, totalheight, boxwidth, Font):
+class sli(object):
+    __slots__ = ('index', 'max', 'min')
+    def __init__ (self, tup):
+        self.index = tup[0]
+        self.min = tup[1]
+        self.max = tup[2]
+
+def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, boxwidth, Font):
     Clock = ABClock()
     focus = 0
+    sliderdata = {}
+    for item in Items:
+        if item[2] == 'slider':
+            sliderdata[item[1]] = sli(item[3])
     while True:
         Clock.tick(10)
         keystate = pygame.key.get_pressed()
         for event in pygame.event.get():
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                return 'exit'
+            if event.type == QUIT:
+                return 'exit', sliderdata
+            elif event.type == KEYDOWN and event.key == K_ESCAPE:
+                return 'cancel', sliderdata
             elif event.type == MOUSEBUTTONDOWN:
                 if event.button==1:
                     if Xoffset < event.pos[0] < Xoffset+boxwidth and Yoffset < event.pos[1] < totalheight*len(Items):
                         clicked_item = (event.pos[1] - 20)/totalheight
                         if Items[clicked_item][2] == 'button':
-                            return Items[clicked_item][1]
+                            return Items[clicked_item][1], sliderdata
+                        elif Items[clicked_item][2] == 'slider':
+                            if Xoffset2 < event.pos[0]:
+                                p = sliderdata[Items[clicked_item][1]]
+                                p.index = int(round(float(event.pos[0] - Xoffset2)/(boxwidth-Xoffset2+Xoffset)*p.max + p.min))
             elif event.type == MOUSEMOTION:
                 if Xoffset < event.pos[0] < Xoffset+boxwidth and Yoffset < event.pos[1] < totalheight*len(Items):
                     focus = (event.pos[1] - Yoffset)/totalheight
             elif event.type == KEYDOWN:
-                if event.key in (K_DOWN, K_RIGHT):
+                if event.key == K_DOWN:
                     focus = (focus + 1) % len(Items)
-                elif event.key in (K_UP, K_LEFT):
+                if event.key == K_RIGHT:
+                    if Items[focus][2] == 'slider':
+                        if sliderdata[Items[focus][1]].index < sliderdata[Items[focus][1]].max:
+                            sliderdata[Items[focus][1]].index += 1
+                    else:
+                        focus = (focus + 1) % len(Items)
+                elif event.key == K_UP:
                     focus = (focus - 1) % len(Items)
+                if event.key == K_LEFT:
+                    if Items[focus][2] == 'slider':
+                        if sliderdata[Items[focus][1]].index > sliderdata[Items[focus][1]].min:
+                            sliderdata[Items[focus][1]].index -= 1
+                    else:
+                        focus = (focus - 1) % len(Items)
                 elif event.key in (K_RETURN, K_SPACE):
                     if Items[focus][2] == 'button':
-                        return Items[focus][1]
+                        return Items[focus][1], sliderdata
                 else:
                     pass
         Surface.fill((0,0,0))
@@ -75,7 +100,10 @@ def menu(Surface, Items, Xoffset, Yoffset, itemheight, totalheight, boxwidth, Fo
                     Surface.blit(Font.render(draw_item, True, (0, 0, 0)),
                                  (Xoffset+15, Yoffset+ 5 + n*totalheight))
                 elif draw_type == 'slider':
-                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth/2, Yoffset + n*totalheight, boxwidth/2, itemheight))
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight, boxwidth-Xoffset2+Xoffset, itemheight))
+                    p = sliderdata[Items[n][1]]
+                    if p.index > p.min:
+                        pygame.draw.rect(Surface, (200, 200, 200), (Xoffset2, Yoffset + n*totalheight, float(p.index-p.min)/(p.max-p.min)*(boxwidth-Xoffset2+Xoffset), itemheight))
                     Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
                                  (Xoffset+15, Yoffset+ 5 + n*totalheight))
             else:
@@ -88,7 +116,10 @@ def menu(Surface, Items, Xoffset, Yoffset, itemheight, totalheight, boxwidth, Fo
                     Surface.blit(Font.render(draw_item, True, (155, 155, 155)),
                                  (Xoffset+15, Yoffset+ 5 + n*totalheight))
                 elif draw_type == 'slider':
-                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth/2, Yoffset + n*totalheight, boxwidth/2, itemheight), 1)
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight, boxwidth-Xoffset2+Xoffset, itemheight), 1)
+                    p = sliderdata[Items[n][1]]
+                    if p.index > p.min:
+                        pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight, float(p.index-p.min)/(p.max-p.min)*(boxwidth-Xoffset2+Xoffset), itemheight))
                     Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
                                  (Xoffset+15, Yoffset+ 5 + n*totalheight))
         pygame.display.flip()
@@ -101,9 +132,17 @@ if __name__ == '__main__':
     Surface = pygame.display.set_mode((640,480))#, SCR_FULL and FULLSCREEN)
     Font = pygame.font.Font("mksanstallx.ttf",14)
     Items = [('Abc', 'abc', 'button'),
-             ('Do something', 'x', 'slider'),
+             ('Do something', 'x', 'slider', (2, 0, 10)),
              ('Test', 'name', 'disabled'),
              ('Quit', 'exit', 'button'),
             ]
-    menu(Surface, Items, 30, 30, 30, 50, 200, Font)
+    result = menu(Surface, Items, 30, 200, 30, 30, 50, 300, Font)
+    if result[0] in ('cancel', 'exit'):
+        print "User quitted"
+    elif result[0] == 'abc':
+        print "User chose Abc"
+    elif result[0] == 'name':
+        print "User chose Test"
+    print "Slider index:",
+    print result[1]['x'].index
     pygame.quit()
