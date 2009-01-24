@@ -1,4 +1,4 @@
-#ADV-MENU TEST 1.0
+#ADV-MENU TEST 1.1
 #(C) 2008 Robin Wellner
 #
 #This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,16 @@ Items = [('Abc', 'abc', 'button'),
          ('Do something', 'x', 'slider', (2, 0, 10)),
          ('Done', 'p', 'checkbox', True),
          ('Test', 'name', 'disabled'),
+         ('Cancel', 'cancel', 'cancelbutton'),
          ('Quit', 'exit', 'button'),
+         ('Useless button 1', 'btn', 'button'),
+         ('Useless button 2', 'btn', 'button'),
+         ('Useless button 3', 'btn', 'button'),
+         ('Useless button 4', 'btn', 'button'),
+         ('Useless button 5', 'btn', 'button'),
+         ('Useless button 6', 'btn', 'button'),
+         ('Useless button 7', 'btn', 'button'),
+         ('Useless button 8', 'btn', 'button'),
         ]
 result = menu(Surface, Items, 30, 200, 30, 30, 50, 300, Font)
 

@@ -1,7 +1,8 @@
-#ADV-MENU 1.1.1
+#ADV-MENU 1.2.0
 #(C) 2008 Robin Wellner
+#Part of SpaceFlight2D
 #
-#This program is free software: you can redistribute it and/or modify
+#SpaceFlight2D is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 3 of the License, or
 #(at your option) any later version.
@@ -62,7 +63,7 @@ def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, bo
                 if event.button==1:
                     if Xoffset < event.pos[0] < Xoffset+boxwidth and Yoffset < event.pos[1] < totalheight*len(Items):
                         clicked_item = (event.pos[1] - 20)/totalheight
-                        if Items[clicked_item][2] == 'button':
+                        if Items[clicked_item][2] in ('button', 'cancelbutton'):
                             return Items[clicked_item][1], sliderdata
                         elif Items[clicked_item][2] == 'slider':
                             if Xoffset2 < event.pos[0]:
@@ -93,7 +94,7 @@ def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, bo
                     else:
                         focus = (focus - 1) % len(Items)
                 elif event.key in (K_RETURN, K_SPACE):
-                    if Items[focus][2] == 'button':
+                    if Items[focus][2] in ('button', 'cancelbutton'):
                         return Items[focus][1], sliderdata
                     elif Items[focus][2] == 'checkbox':
                         p = sliderdata[Items[focus][1]]
@@ -101,53 +102,57 @@ def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, bo
                 else:
                     pass
         Surface.fill((0,0,0))
+        if Yoffset + focus*totalheight + itemheight > Surface.get_height():
+            Ymod = Yoffset + (focus+1)*totalheight + itemheight - Surface.get_height()
+        else:
+            Ymod = 0
         for n in range(len(Items)):
             draw_item = Items[n][0]
             draw_type = Items[n][2]
             if focus == n:
                 if draw_type == 'button':
-                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset, Yoffset + n*totalheight, boxwidth, itemheight))
-                    Surface.blit(Font.render(draw_item, True, (0, 0, 0)),
-                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset, Yoffset + n*totalheight - Ymod, boxwidth, itemheight))
+                    drawcolor = (0, 0, 0)
+                elif draw_type == 'cancelbutton':
+                    pygame.draw.rect(Surface, (200, 200, 200), (Xoffset, Yoffset + n*totalheight - Ymod, boxwidth, itemheight))
+                    drawcolor = (0, 0, 0)
                 elif draw_type == 'disabled':
-                    pygame.draw.rect(Surface, (155, 155, 155), (Xoffset, Yoffset + n*totalheight, boxwidth, itemheight))
-                    Surface.blit(Font.render(draw_item, True, (0, 0, 0)),
-                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                    pygame.draw.rect(Surface, (155, 155, 155), (Xoffset, Yoffset + n*totalheight - Ymod, boxwidth, itemheight))
+                    drawcolor = (0, 0, 0)
                 elif draw_type == 'slider':
-                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight, boxwidth-Xoffset2+Xoffset, itemheight))
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight - Ymod, boxwidth-Xoffset2+Xoffset, itemheight))
                     p = sliderdata[Items[n][1]]
                     if p.index > p.min:
-                        pygame.draw.rect(Surface, (200, 200, 200), (Xoffset2, Yoffset + n*totalheight, float(p.index-p.min)/(p.max-p.min)*(boxwidth-Xoffset2+Xoffset), itemheight))
-                    Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
-                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                        pygame.draw.rect(Surface, (200, 200, 200), (Xoffset2, Yoffset + n*totalheight - Ymod, float(p.index-p.min)/(p.max-p.min)*(boxwidth-Xoffset2+Xoffset), itemheight))
+                    drawcolor = (255, 255, 255)
                 elif draw_type == 'checkbox':
-                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth-itemheight, Yoffset + n*totalheight, itemheight, itemheight))
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth-itemheight, Yoffset + n*totalheight - Ymod, itemheight, itemheight))
                     p = sliderdata[Items[n][1]]
                     if not p.checked:
-                        pygame.draw.rect(Surface, (0, 0, 0), (Xoffset+boxwidth-itemheight+8, Yoffset + n*totalheight+8, itemheight-16, itemheight-16))
-                    Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
-                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                        pygame.draw.rect(Surface, (0, 0, 0), (Xoffset+boxwidth-itemheight+8, Yoffset + n*totalheight+8 - Ymod, itemheight-16, itemheight-16))
+                    drawcolor = (255, 255, 255)
             else:
                 if draw_type == 'button':
-                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset, Yoffset + n*totalheight, boxwidth, itemheight), 1)
-                    Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
-                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset, Yoffset + n*totalheight - Ymod, boxwidth, itemheight), 1)
+                    drawcolor = (255, 255, 255)
+                elif draw_type == 'cancelbutton':
+                    pygame.draw.rect(Surface, (200, 200, 200), (Xoffset, Yoffset + n*totalheight - Ymod, boxwidth, itemheight), 1)
+                    drawcolor = (200, 200, 200)
                 elif draw_type == 'disabled':
-                    pygame.draw.rect(Surface, (155, 155, 155), (Xoffset, Yoffset + n*totalheight, boxwidth, itemheight), 1)
-                    Surface.blit(Font.render(draw_item, True, (155, 155, 155)),
-                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                    pygame.draw.rect(Surface, (155, 155, 155), (Xoffset, Yoffset + n*totalheight - Ymod, boxwidth, itemheight), 1)
+                    drawcolor = (155, 155, 155)
                 elif draw_type == 'slider':
-                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight, boxwidth-Xoffset2+Xoffset, itemheight), 1)
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight - Ymod, boxwidth-Xoffset2+Xoffset, itemheight), 1)
                     p = sliderdata[Items[n][1]]
                     if p.index > p.min:
-                        pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight, float(p.index-p.min)/(p.max-p.min)*(boxwidth-Xoffset2+Xoffset), itemheight))
-                    Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
-                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                        pygame.draw.rect(Surface, (255, 255, 255), (Xoffset2, Yoffset + n*totalheight - Ymod, float(p.index-p.min)/(p.max-p.min)*(boxwidth-Xoffset2+Xoffset), itemheight))
+                    drawcolor = (255, 255, 255)
                 elif draw_type == 'checkbox':
-                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth-itemheight, Yoffset + n*totalheight, itemheight, itemheight), 1)
+                    pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth-itemheight, Yoffset + n*totalheight - Ymod, itemheight, itemheight), 1)
                     p = sliderdata[Items[n][1]]
                     if p.checked:
-                        pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth-itemheight+8, Yoffset + n*totalheight+8, itemheight-16, itemheight-16))
-                    Surface.blit(Font.render(draw_item, True, (255, 255, 255)),
-                                 (Xoffset+15, Yoffset+ 5 + n*totalheight))
+                        pygame.draw.rect(Surface, (255, 255, 255), (Xoffset+boxwidth-itemheight+8, Yoffset + n*totalheight+8 - Ymod, itemheight-16, itemheight-16))
+                    drawcolor = (255, 255, 255)
+            Surface.blit(Font.render(draw_item, True, drawcolor),
+                         (Xoffset+15, Yoffset+ 5 + n*totalheight - Ymod))
         pygame.display.flip()
