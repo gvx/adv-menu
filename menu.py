@@ -1,34 +1,16 @@
-#ADV-MENU 1.2.0
-#(C) 2008 Robin Wellner
-#Part of SpaceFlight2D
+#ADV-MENU 1.2.1
+#(C) 2009 Robin Wellner
 #
-#SpaceFlight2D is free software: you can redistribute it and/or modify
+#This program is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 3 of the License, or
 #(at your option) any later version.
-#Released under GPL (see http://www.gnu.org/licenses/)
 
 import pygame
 from pygame.locals import *
 from math import *
 
-from time import sleep, time
-class ABClock:
-    def __init__(self):
-        self.t = time()
-    def tick(self, rate=-1):
-        self.rate = rate
-        self._stop()
-        retVal = int(round((time() - self.t) * 1000, 0))
-        self.t = time()
-        return retVal
-    def _stop(self):
-        try:
-            sleep_time = 1.0/self.rate - (time() - self.t)
-            if sleep_time > 0:
-               sleep(sleep_time)
-        except IOError:
-            pass
+from clock import ABClock
 
 class sli(object):
     __slots__ = ('index', 'max', 'min')
@@ -42,9 +24,8 @@ class chk(object):
     def __init__ (self, checked):
         self.checked = checked
 
-def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, boxwidth, Font):
+def menu(Surface, Items, Xoffset, Xoffset2, Yoffset, itemheight, totalheight, boxwidth, Font, focus=0):
     Clock = ABClock()
-    focus = 0
     sliderdata = {}
     for item in Items:
         if item[2] == 'slider':
